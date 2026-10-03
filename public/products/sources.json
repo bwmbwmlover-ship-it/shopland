@@ -1,0 +1,219 @@
+[
+  {
+    "filename": "headphones-yellow.jpg",
+    "label": "Over-ear headphones",
+    "imageUrl": "https://images.unsplash.com/photo-1505751104546-4b63c93054b1?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/wireless-headphones-with-yellow-background-oBI4NBP2Lhg",
+    "creatorOrPublisher": "C D-X",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      800
+    ],
+    "transparent": false,
+    "notes": "Full product on solid yellow. Best clean headphone card; source photograph."
+  },
+  {
+    "filename": "earbuds-clean.jpg",
+    "label": "White wireless earbuds",
+    "imageUrl": "https://images.unsplash.com/photo-1783890848515-c0dc28b25ef2?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/white-wireless-earbuds-in-an-open-charging-case-Lq_hFffbAeM",
+    "creatorOrPublisher": "Ali Kanjarawi",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1200
+    ],
+    "transparent": false,
+    "notes": "Square close product photo. Neutral dark backdrop and wood table. Earbuds and open case."
+  },
+  {
+    "filename": "smartphone-clean.jpg",
+    "label": "Smartphone",
+    "imageUrl": "https://images.unsplash.com/photo-1736191550786-46a46aa47394?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-white-cell-phone-with-a-blank-screen-ZfQUwQsG1QY",
+    "creatorOrPublisher": "Ingmar",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1800
+    ],
+    "transparent": false,
+    "notes": "Phone alone on light gray. Source describes iPhone 15 Pro Max; generic Smartphone label recommended."
+  },
+  {
+    "filename": "smartwatch.jpg",
+    "label": "Smartwatch",
+    "imageUrl": "https://images.unsplash.com/photo-1772983069620-43a502c2784f?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-modern-smartwatch-with-a-dark-blue-band-Oguv1CcnAXs",
+    "creatorOrPublisher": "GALINA BOGDANOVA",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1225
+    ],
+    "transparent": false,
+    "notes": "Nearly square watch on pale background. Source identifies Apple Watch without model."
+  },
+  {
+    "filename": "laptop.jpg",
+    "label": "Laptop",
+    "imageUrl": "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/laptop-on-white-table-Gi3iUJ1FwxI",
+    "creatorOrPublisher": "Dell",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      675
+    ],
+    "transparent": false,
+    "notes": "Landscape editorial laptop on white tabletop; city view in background."
+  },
+  {
+    "filename": "backpack.jpg",
+    "label": "Everyday backpack",
+    "imageUrl": "https://images.unsplash.com/photo-1594299447935-e5b840f54b9b?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/black-backpack-on-white-box-d-BTL93LsGg",
+    "creatorOrPublisher": "I'M ZION",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1600
+    ],
+    "transparent": false,
+    "notes": "Black backpack against light gray. Includes a hand at the top and a plant at the edge; centered crop can focus on the bag."
+  },
+  {
+    "filename": "sunglasses.jpg",
+    "label": "Sunglasses",
+    "imageUrl": "https://images.unsplash.com/photo-1649119161997-00ffc8c24e11?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-pair-of-sunglasses-on-a-white-background-tUyg4nIQHPk",
+    "creatorOrPublisher": "Alondra Lucia",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1200
+    ],
+    "transparent": false,
+    "notes": "Square glasses alone on very light neutral background."
+  },
+  {
+    "filename": "skincare.jpg",
+    "label": "Cleansing oil",
+    "imageUrl": "https://images.unsplash.com/photo-1745238978251-800e5a0dbe0c?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/bottle-of-skincare-product-on-a-table-DQONde6fLV0",
+    "creatorOrPublisher": "Mona Jain",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1804
+    ],
+    "transparent": false,
+    "notes": "Amber pump bottle alone in warm natural light. Label visible: dear, klairs Gentle Black Deep Cleansing Oil. Generic cleansing oil label is supported."
+  },
+  {
+    "filename": "gaming-mouse.jpg",
+    "label": "Gaming mouse",
+    "imageUrl": "https://images.unsplash.com/photo-1781094934930-cb2977557801?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-white-gaming-mouse-with-a-unique-geometric-design-ToOMCoXIA0Q",
+    "creatorOrPublisher": "Alex de Koning",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1800
+    ],
+    "transparent": false,
+    "notes": "White/pale gaming mouse in clean editorial close-up, neutral beige surface and blurred background."
+  },
+  {
+    "filename": "chair.jpg",
+    "label": "Wooden chair",
+    "imageUrl": "https://images.unsplash.com/photo-1750306957114-ba6deb1eaa9f?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-wooden-chair-is-pictured-against-a-white-background-bbuhw5PT0to",
+    "creatorOrPublisher": "ObjectType RAW",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1500
+    ],
+    "transparent": false,
+    "notes": "Chair alone on pale gray. The source guesses a model; do not assert that model."
+  },
+  {
+    "filename": "cushion.jpg",
+    "label": "Home cushion",
+    "imageUrl": "https://images.unsplash.com/photo-1629949008265-af1bcaf59786?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/white-throw-pillow-on-white-couch-UR_eZMMmVn4",
+    "creatorOrPublisher": "Mediamodifier",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1200
+    ],
+    "transparent": false,
+    "notes": "Square white cushion against pale yellow-green with a vase at the edge."
+  },
+  {
+    "filename": "sneakers-white.jpg",
+    "label": "White sneakers alternate",
+    "imageUrl": "https://images.unsplash.com/photo-1577982886439-c25dc08b0c01?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/pair-of-white-sneakers-XVBZc0zig4Y",
+    "creatorOrPublisher": "Zachary Keimig",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1800
+    ],
+    "transparent": false,
+    "notes": "Freely licensed alternative: two white/gray sneakers alone on dark background."
+  },
+  {
+    "filename": "coffee-machine.jpg",
+    "label": "Coffee machine alternate",
+    "imageUrl": "https://images.unsplash.com/photo-1680539882932-559b099446cc?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/a-coffee-machine-sitting-on-top-of-a-counter-qscFs9IJFxs",
+    "creatorOrPublisher": "Harshal",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      1903
+    ],
+    "transparent": false,
+    "notes": "Freely licensed alternative kitchen asset. Espresso machine on dark wooden counter; includes cups and adjacent grinder."
+  },
+  {
+    "filename": "lamp-white.jpg",
+    "label": "Table lamp alternate",
+    "imageUrl": "https://images.unsplash.com/photo-1563740585252-c314f8f00f2c?auto=format&fit=crop&fm=jpg&q=85&w=1200",
+    "sourcePage": "https://unsplash.com/photos/white-table-lamp-THVR0Ie-qgk",
+    "creatorOrPublisher": "Andy Vult",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "dimensions": [
+      1200,
+      800
+    ],
+    "transparent": false,
+    "notes": "Freely licensed alternative lamp asset. White table lamp in dim interior next to a plant; less suitable for isolated catalog card."
+  },
+  {
+    "filename": "sport.webp",
+    "sourcePage": "https://unsplash.com/photos/black-and-silver-dumbbells-on-white-background-0zkJ1EsH9dY",
+    "creatorOrPublisher": "Greg Rosenke",
+    "reuse": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license"
+  }
+]
