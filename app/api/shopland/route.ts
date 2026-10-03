@@ -1,62 +1,37 @@
-import {getChatGPTUser} from '@/app/chatgpt-auth';
-import {rawDb,ensureCatalog,productFromRow,orderFromRow,adminEmail} from '@/db/shop';
-import {deliveryFee,type CartItem,type OrderItem} from '@/lib/catalog';
-import {contentFields,type SiteContent} from '@/lib/content';
-import {getSiteContent,getAnnouncements} from '@/db/content';
-export const dynamic='force-dynamic';
-function response(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store'}});}
-class ShopError extends Error {constructor(public code:string,public status=400){super(code);}}
-function str(v:unknown,min=1,max=200){if(typeof v!=='string'||v.trim().length<min||v.trim().length>max)throw new ShopError('invalidData');return v.trim();}
-function integer(v:unknown,min=0,max=100000000){if(typeof v!=='number'||!Number.isSafeInteger(v)||v<min||v>max)throw new ShopError('invalidData');return v;}
-function bool(v:unknown){if(typeof v!=='boolean')throw new ShopError('invalidData');return v?1:0;}
-function object(v:unknown){if(!v||typeof v!=='object'||Array.isArray(v))throw new ShopError('invalidData');return v as Record<string,unknown>;}
-function localized(v:unknown,min=1,max=3000){const value=object(v);return {uz:str(value.uz,min,max),ru:str(value.ru,min,max),en:str(value.en,min,max)};}
-async function guarded(fn:()=>Promise<Response>){try{return await fn();}catch(e){if(e instanceof ShopError)return response({error:e.code},e.status);console.error('ShopLand request failed',e);return response({error:'error'},503);}}
-async function getOrders(userId:string,all=false){const q=all?'SELECT * FROM orders ORDER BY created_at DESC LIMIT 500':'SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 100';const stmt=rawDb().prepare(q);const r=await (all?stmt:stmt.bind(userId)).all<Record<string,unknown>>();return r.results.map(orderFromRow);}
-export async function GET(request:Request){return guarded(async()=>{const user=await getChatGPTUser();const isAdmin=!!user&&!!adminEmail()&&user.email.toLowerCase()===adminEmail();const view=new URL(request.url).searchParams.get('view')||'bootstrap';await ensureCatalog();const db=rawDb();if(view==='bootstrap'){const p=await db.prepare('SELECT * FROM products ORDER BY featured DESC,rowid').all<Record<string,unknown>>();let cart:CartItem[]=[],wishlist:string[]=[];if(user){const [c,w]=await Promise.all([db.prepare('SELECT product_id AS productId,variant,quantity FROM cart WHERE user_id=?').bind(user.userId).all<CartItem>(),db.prepare('SELECT product_id FROM wishlist WHERE user_id=?').bind(user.userId).all<{product_id:string}>()]);cart=c.results;wishlist=w.results.map(x=>x.product_id);}return response({products:p.results.filter(r=>isAdmin||Number(r.active)===1||cart.some(c=>c.productId===r.id)||wishlist.includes(String(r.id))).map(productFromRow),cart,wishlist,user:user?{name:user.displayName,email:user.email}:null,isAdmin,content:await getSiteContent(),announcements:await getAnnouncements(user?.userId||null)});}if(view==='announcements')return response({announcements:await getAnnouncements(user?.userId||null)});if(!user)throw new ShopError('sessionError',401);if(view==='orders')return response({orders:await getOrders(user.userId)});if(view==='support'){const r=await db.prepare('SELECT * FROM messages WHERE user_id=? ORDER BY created_at LIMIT 500').bind(user.userId).all();return response({messages:r.results});}if(view==='admin'){if(!isAdmin)throw new ShopError('notAdmin',403);const [orders,m,p]=await Promise.all([getOrders(user.userId,true),db.prepare('SELECT * FROM messages ORDER BY created_at LIMIT 1000').all(),db.prepare('SELECT * FROM promos ORDER BY code').all()]);return response({orders,messages:m.results,promos:p.results,content:await getSiteContent(),announcements:await getAnnouncements(user.userId,true)});}throw new ShopError('invalidData');});}
-export async function POST(request:Request){return guarded(async()=>{const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new ShopError('invalidData',403);const user=await getChatGPTUser();if(!user)throw new ShopError('sessionError',401);const raw=await request.text();if(raw.length>50000)throw new ShopError('invalidData',413);let b:Record<string,unknown>;try{b=JSON.parse(raw);}catch{throw new ShopError('invalidData');}if(!b||typeof b!=='object'||Array.isArray(b))throw new ShopError('invalidData');await ensureCatalog();const db=rawDb(),isAdmin=!!adminEmail()&&user.email.toLowerCase()===adminEmail(),action=b.action;
-if(action==='siteContent'){
- if(!isAdmin)throw new ShopError('notAdmin',403);
- const input=object(b.content),inputTexts=object(input.texts),texts={} as SiteContent['texts'];
- for(const field of contentFields)texts[field.key]=localized(inputTexts[field.key],1,field.max);
- const heroProductId=str(input.heroProductId,1,80),heroTarget=str(input.heroTarget);
- if(!['sale','all','electronics','fashion','home','beauty','sport'].includes(heroTarget))throw new ShopError('invalidData');
- if(!await db.prepare('SELECT id FROM products WHERE id=? AND active=1').bind(heroProductId).first())throw new ShopError('invalidData');
- const content:SiteContent={texts,heroProductId,heroTarget:heroTarget as SiteContent['heroTarget']};
- await db.prepare('INSERT INTO site_content(id,data) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').bind('main',JSON.stringify(content)).run();
- return response({ok:true,content});
+import { seedProducts } from "@/lib/catalog";
+import { defaultContent } from "@/lib/content";
+
+export const dynamic = "force-dynamic";
+
+function response(data: unknown, status = 200) {
+  return Response.json(data, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  });
 }
-if(action==='announcement'){
- if(!isAdmin)throw new ShopError('notAdmin',403);
- const id=str(b.id,16,80);if(!/^[a-zA-Z0-9-]+$/.test(id))throw new ShopError('invalidData');
- const title=localized(b.title,2,140),body=localized(b.body,1,3000),kind=str(b.kind),published=bool(b.published);
- if(!['news','promotion'].includes(kind))throw new ShopError('invalidData');
- const promoCode=typeof b.promoCode==='string'?str(b.promoCode,0,32).toUpperCase():'';
- if(promoCode&&(kind!=='promotion'||!/^[A-Z0-9_-]+$/.test(promoCode)))throw new ShopError('invalidData');
- if(promoCode&&published&&!await db.prepare('SELECT code FROM promos WHERE code=? AND active=1').bind(promoCode).first())throw new ShopError('invalidPromo');
- const now=new Date().toISOString();
- await db.prepare('INSERT INTO announcements(id,title,body,kind,promo_code,published,revision,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,body=excluded.body,kind=excluded.kind,promo_code=excluded.promo_code,published=excluded.published,revision=announcements.revision+1,updated_at=excluded.updated_at').bind(id,JSON.stringify(title),JSON.stringify(body),kind,promoCode,published,now,now).run();
- return response({ok:true});
+
+export async function GET(request: Request) {
+  const view = new URL(request.url).searchParams.get("view") || "bootstrap";
+
+  if (view === "bootstrap") {
+    return response({
+      products: seedProducts,
+      cart: [],
+      wishlist: [],
+      user: null,
+      isAdmin: false,
+      content: defaultContent,
+      announcements: [],
+    });
+  }
+
+  if (view === "announcements") {
+    return response({ announcements: [] });
+  }
+
+  return response({ error: "sessionError" }, 401);
 }
-if(action==='announcementRead'){
- const id=str(b.id,16,80),revision=integer(b.revision,1);
- const a=await db.prepare('SELECT revision FROM announcements WHERE id=? AND published=1').bind(id).first<{revision:number}>();
- if(!a||revision>a.revision)throw new ShopError('invalidData');
- await db.prepare('INSERT INTO announcement_reads(user_id,announcement_id,read_revision) VALUES (?,?,?) ON CONFLICT(user_id,announcement_id) DO UPDATE SET read_revision=MAX(announcement_reads.read_revision,excluded.read_revision)').bind(user.userId,id,revision).run();
- return response({ok:true});
+
+export async function POST() {
+  return response({ error: "sessionError" }, 401);
 }
-if(action==='announcementsReadAll'){
- await db.prepare('INSERT INTO announcement_reads(user_id,announcement_id,read_revision) SELECT ?,id,revision FROM announcements WHERE published=1 ON CONFLICT(user_id,announcement_id) DO UPDATE SET read_revision=MAX(announcement_reads.read_revision,excluded.read_revision)').bind(user.userId).run();
- return response({ok:true,announcements:await getAnnouncements(user.userId)});
-}
-if(action==='wishlist'){const id=str(b.productId);const p=await db.prepare('SELECT id FROM products WHERE id=?').bind(id).first();if(!p)throw new ShopError('invalidData');if(bool(b.saved))await db.prepare('INSERT OR IGNORE INTO wishlist(user_id,product_id) VALUES (?,?)').bind(user.userId,id).run();else await db.prepare('DELETE FROM wishlist WHERE user_id=? AND product_id=?').bind(user.userId,id).run();return response({ok:true});}
-if(action==='cart'){const id=str(b.productId),variant=str(b.variant),quantity=integer(b.quantity,0,20),mode=b.mode==='add'?'add':'set';const row=await db.prepare('SELECT * FROM products WHERE id=?').bind(id).first<Record<string,unknown>>();if(!row)throw new ShopError('invalidData');const p=productFromRow(row);if(!p.variants.includes(variant))throw new ShopError('invalidData');if(quantity===0){await db.prepare('DELETE FROM cart WHERE user_id=? AND product_id=? AND variant=?').bind(user.userId,id,variant).run();return response({ok:true});}if(!p.active||quantity>p.stock)throw new ShopError('stockError');const other=await db.prepare('SELECT COALESCE(SUM(quantity),0) AS n FROM cart WHERE user_id=? AND product_id=? AND variant<>?').bind(user.userId,id,variant).first<{n:number}>();const current=await db.prepare('SELECT quantity FROM cart WHERE user_id=? AND product_id=? AND variant=?').bind(user.userId,id,variant).first<{quantity:number}>();const q=mode==='add'?Math.min(20,(current?.quantity||0)+quantity):quantity;if(q+(other?.n||0)>p.stock)throw new ShopError('stockError');await db.prepare('INSERT INTO cart(user_id,product_id,variant,quantity) VALUES (?,?,?,?) ON CONFLICT(user_id,product_id,variant) DO UPDATE SET quantity=excluded.quantity').bind(user.userId,id,variant,q).run();return response({ok:true});}
-if(action==='promo'){const code=str(b.code,1,32).toUpperCase(),subtotal=integer(b.subtotal);const promo=await db.prepare('SELECT * FROM promos WHERE code=? AND active=1').bind(code).first<{code:string;percent:number;cap:number}>();if(!promo)throw new ShopError('invalidPromo');return response({code:promo.code,percent:promo.percent,cap:promo.cap,discount:Math.min(Math.floor(subtotal*promo.percent/100),promo.cap)});}
-if(action==='order'){const id=str(b.id,16,64);if(!/^[a-zA-Z0-9-]+$/.test(id))throw new ShopError('invalidData');const existing=await db.prepare('SELECT * FROM orders WHERE id=?').bind(id).first<Record<string,unknown>>();if(existing){if(existing.user_id!==user.userId)throw new ShopError('invalidData',409);return response({order:orderFromRow(existing)});}const name=str(b.name,2,100),phone=str(b.phone,9,25),city=str(b.city,2,80),delivery=str(b.delivery),payment=str(b.payment),note=typeof b.note==='string'?str(b.note||' ',0,500):'';if(!/^[+\d\s()-]{9,25}$/.test(phone)||phone.replace(/\D/g,'').length<9)throw new ShopError('invalidData');if(!['courier','pickup'].includes(delivery)||!['cash','cardDelivery'].includes(payment)||b.acceptTerms!==true)throw new ShopError('invalidData');const address=delivery==='courier'?str(b.address,5,250):'pickup';const rows=await db.prepare('SELECT c.product_id,c.variant,c.quantity,p.* FROM cart c JOIN products p ON p.id=c.product_id WHERE c.user_id=?').bind(user.userId).all<Record<string,unknown>>();if(!rows.results.length||rows.results.length>40)throw new ShopError('invalidData');const items:OrderItem[]=rows.results.map(r=>{const p=productFromRow(r),quantity=Number(r.quantity);if(!p.active||quantity<1||quantity>20||quantity>p.stock)throw new ShopError('stockError');return {productId:p.id,name:p.name,image:p.image,variant:String(r.variant),quantity,price:p.price};});const subtotal=items.reduce((s,p)=>s+p.price*p.quantity,0),shipping=deliveryFee(subtotal,delivery);const code=typeof b.promo==='string'?b.promo.trim().toUpperCase():'';let discount=0;if(code){const promo=await db.prepare('SELECT percent,cap FROM promos WHERE code=? AND active=1').bind(code).first<{percent:number;cap:number}>();if(!promo)throw new ShopError('invalidPromo');discount=Math.min(Math.floor(subtotal*promo.percent/100),promo.cap);}const total=subtotal-discount+shipping,created=new Date().toISOString(),number='SL-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomUUID().slice(0,4).toUpperCase();const counts=Object.entries(items.reduce<Record<string,number>>((a,i)=>{a[i.productId]=(a[i.productId]||0)+i.quantity;return a;},{})).map(([productId,quantity])=>({productId,quantity}));const cartJson=JSON.stringify(counts);
-const insert=db.prepare(`INSERT INTO orders(id,user_id,number,name,phone,city,address,delivery,payment,promo,subtotal,discount,shipping,total,status,created_at,items,note) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?,? WHERE NOT EXISTS (SELECT 1 FROM json_each(?) j LEFT JOIN products p ON p.id=json_extract(j.value,'$.productId') WHERE p.id IS NULL OR p.active<>1 OR p.stock<json_extract(j.value,'$.quantity'))`).bind(id,user.userId,number,name,phone,city,address,delivery,payment,code,subtotal,discount,shipping,total,created,JSON.stringify(items),note,cartJson);
-await db.batch([insert,...counts.map(i=>db.prepare('UPDATE products SET stock=stock-? WHERE id=? AND EXISTS(SELECT 1 FROM orders WHERE id=? AND user_id=? AND created_at=?)').bind(i.quantity,i.productId,id,user.userId,created)),db.prepare('DELETE FROM cart WHERE user_id=? AND EXISTS(SELECT 1 FROM orders WHERE id=? AND user_id=? AND created_at=?)').bind(user.userId,id,user.userId,created)]);const placed=await db.prepare('SELECT * FROM orders WHERE id=? AND user_id=?').bind(id,user.userId).first<Record<string,unknown>>();if(!placed)throw new ShopError('stockError',409);return response({order:orderFromRow(placed)},201);}
-if(action==='cancelOrder'||action==='orderStatus'){const id=str(b.id);if(action==='orderStatus'&&!isAdmin)throw new ShopError('notAdmin',403);const o=await db.prepare('SELECT * FROM orders WHERE id=?').bind(id).first<Record<string,unknown>>();if(!o||(!isAdmin&&o.user_id!==user.userId))throw new ShopError('invalidData',404);const old=String(o.status),status=action==='cancelOrder'?'cancelled':str(b.status);const transitions:Record<string,string[]>={pending:['confirmed','cancelled'],confirmed:['shipping','cancelled'],shipping:['delivered'],delivered:[],cancelled:[]};if(action==='cancelOrder'&&old!=='pending')throw new ShopError('invalidData');if(!transitions[old]?.includes(status))throw new ShopError('invalidData');if(status==='cancelled'){const token=crypto.randomUUID();await db.batch([db.prepare('UPDATE orders SET status=? WHERE id=? AND status=?').bind('cancelled:'+token,id,old),...orderFromRow(o).items.map(i=>db.prepare('UPDATE products SET stock=stock+? WHERE id=? AND EXISTS(SELECT 1 FROM orders WHERE id=? AND status=?)').bind(i.quantity,i.productId,id,'cancelled:'+token)),db.prepare('UPDATE orders SET status=? WHERE id=? AND status=?').bind('cancelled',id,'cancelled:'+token)]);}else await db.prepare('UPDATE orders SET status=? WHERE id=? AND status=?').bind(status,id,old).run();return response({ok:true});}
-if(action==='message'){const body=str(b.body,1,2000),target=isAdmin&&typeof b.userId==='string'?str(b.userId):user.userId,sender=isAdmin&&b.userId?'admin':'customer';if(sender==='admin'){const recipient=await db.prepare('SELECT id FROM messages WHERE user_id=? LIMIT 1').bind(target).first();if(!recipient)throw new ShopError('invalidData');}await db.prepare('INSERT INTO messages(id,user_id,sender,body,created_at) VALUES (?,?,?,?,?)').bind(crypto.randomUUID(),target,sender,body,new Date().toISOString()).run();return response({ok:true},201);}
-if(action==='product'){if(!isAdmin)throw new ShopError('notAdmin',403);const id=str(b.id,1,80);if(!/^[a-z0-9-]+$/.test(id))throw new ShopError('invalidData');const n=b.name as Record<string,unknown>;if(!n)throw new ShopError('invalidData');const name={uz:str(n.uz,2,150),ru:str(n.ru,2,150),en:str(n.en,2,150)},category=str(b.category),brand=str(b.brand,1,60),price=integer(b.price,1),oldPrice=integer(b.oldPrice),stock=integer(b.stock,0,100000),active=bool(b.active),image=str(b.image,1,1500);if(!['electronics','fashion','home','beauty','sport'].includes(category)||!(image.startsWith('/products/')||image.startsWith('https://')))throw new ShopError('invalidData');const old=await db.prepare('SELECT * FROM products WHERE id=?').bind(id).first<Record<string,unknown>>();const d=b.description!==undefined?JSON.stringify(localized(b.description)):old?String(old.description):JSON.stringify({uz:'Tafsilotlarni administrator bilan aniqlashtiring.',ru:'Уточните подробности у администратора.',en:'Ask the administrator for details.'});await db.prepare('INSERT INTO products(id,name,description,category,brand,price,old_price,image,stock,active,is_new,featured,variants) VALUES (?,?,?,?,?,?,?,?,?,?,1,0,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,category=excluded.category,brand=excluded.brand,price=excluded.price,old_price=excluded.old_price,image=excluded.image,stock=excluded.stock,active=excluded.active').bind(id,JSON.stringify(name),d,category,brand,price,oldPrice,image,stock,active,old?String(old.variants):'["standard"]').run();return response({ok:true});}
-if(action==='promoUpdate'){if(!isAdmin)throw new ShopError('notAdmin',403);const code=str(b.code,2,32).toUpperCase();if(!/^[A-Z0-9_-]+$/.test(code))throw new ShopError('invalidData');await db.prepare('INSERT INTO promos(code,percent,cap,active) VALUES (?,?,?,?) ON CONFLICT(code) DO UPDATE SET percent=excluded.percent,cap=excluded.cap,active=excluded.active').bind(code,integer(b.percent,1,90),integer(b.cap,1),bool(b.active)).run();return response({ok:true});}
-throw new ShopError('invalidData');});}
